@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='utf-8'?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+  <channel>
+    <title>AstroBar</title>
+    <description>Most recent changes for AstroBar.</description>
+    <language>en</language>
+    <item>
+      <title>Version 1.0.0</title>
+      <pubDate>Sat, 19 Sep 2026 21:43:41 +0000</pubDate>
+      <sparkle:version>1</sparkle:version>
+      <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;&lt;li&gt;Battery, charge state and dock/link detection for the Astro A50 Gen 4&lt;/li&gt;&lt;li&gt;Estimated runtime on battery and estimated time to full while charging, learned from the observed rate&lt;/li&gt;&lt;li&gt;Full parametric equalizer: three slots with per-band gain, centre frequency and bandwidth&lt;/li&gt;&lt;li&gt;15 loadable EQ presets, including the five originals from Astro Command Center and ten from The ZEFERENCE by ZaliaS&lt;/li&gt;&lt;li&gt;Mix, microphone and stream-output controls&lt;/li&gt;&lt;li&gt;Automatic updates via Sparkle&lt;/li&gt;&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/nichtlegacy/AstroBar/releases/download/v1.0.0/AstroBar-1.0.0.dmg" type="application/octet-stream" sparkle:edSignature="caVgYTcpAm8CNZtWLOD0e4c7y+qVcSHyL7S799TI6ZqFuDCx3euy8LekLamDxSzP+jCtzxPxubrm17vXz+/ADw==" length="3206497" />
+    </item>
+  </channel>
+</rss>

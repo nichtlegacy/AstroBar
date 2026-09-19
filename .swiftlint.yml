@@ -1,0 +1,66 @@
+# SwiftLint configuration for AstroBar.
+# The existing code base must lint clean; keep new code clean as well.
+
+included:
+  - Sources
+  - Tests
+
+opt_in_rules:
+  - empty_count
+  - first_where
+  - redundant_nil_coalescing
+
+disabled_rules:
+  # SwiftUI APIs like `Button { } label: { }` and
+  # `withObservationTracking { } onChange: { }` require this pattern.
+  - multiple_closures_with_trailing_closure
+  # The CLI command-dispatch switch uses an explicit `break` for readability.
+  - unneeded_break_in_switch
+
+line_length:
+  warning: 160
+  error: 240
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded:
+    - id
+    - ok
+    - on
+    - in
+    - at
+    - to
+    - of
+    - a
+    - b
+    - g
+    - i
+    - j
+    - n
+    - p
+    - s
+    - t
+    - v
+    - x
+    - y
+
+type_body_length:
+  warning: 500
+  error: 1000
+
+function_body_length:
+  warning: 120
+  error: 250
+
+file_length:
+  warning: 500
+  error: 1000
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+trailing_whitespace:
+  ignores_empty_lines: true

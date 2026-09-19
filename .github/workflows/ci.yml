@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-test:
+    name: Build, test & package
+    runs-on: macos-26
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      # macos-26 is required, not just convenient: the app references macOS 26
+      # APIs (NSGlassEffectView) behind availability checks, and an availability
+      # check still needs the symbol to exist in the SDK being compiled against.
+      - name: Build (debug)
+        run: swift build
+
+      - name: Run tests
+        run: swift test
+
+      - name: Package AstroBar.app (release, ad-hoc signed)
+        run: ./scripts/package_app.sh release
+
+      - name: Upload AstroBar.app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: AstroBar.app
+          path: AstroBar.app
+          if-no-files-found: error
+
+  lint:
+    name: SwiftLint
+    runs-on: macos-26
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Lint
+        run: swiftlint lint --reporter github-actions-logging
