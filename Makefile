@@ -1,4 +1,4 @@
-.PHONY: build app run cli dump test icon install dmg clean
+.PHONY: build app run cli dump test icon install dmg site serve clean
 
 # Build and install into /Applications, then launch.
 install: app
@@ -15,6 +15,14 @@ dmg: app
 	rm -f AstroBar.dmg
 	hdiutil create -volname AstroBar -srcfolder AstroBar.app -ov -format UDZO AstroBar.dmg
 	@echo "✓ Created AstroBar.dmg"
+
+# Build the landing page into _site/.
+site:
+	./scripts/build_site.sh
+
+# Build the landing page and serve it on 0.0.0.0:8000.
+serve:
+	./scripts/build_site.sh --serve
 
 # Regenerate the app icon (.icns).
 icon:

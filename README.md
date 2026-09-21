@@ -14,7 +14,7 @@ No Logitech G HUB, no Astro Command Center, no background service.
 [![Tests](https://img.shields.io/badge/Tests-67%20green-16A34A)](#development)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Overview](#overview) • [Install](#install) • [The panel](#the-panel) • [Equalizer presets](#equalizer-presets) • [Settings](#settings) • [Architecture](#architecture) • [Development](#development) • [Releasing](#releasing)
+[Website](https://astrobar.nichtlegacy.com) • [Overview](#overview) • [Install](#install) • [The panel](#the-panel) • [Equalizer presets](#equalizer-presets) • [Settings](#settings) • [Architecture](#architecture) • [Development](#development) • [Releasing](#releasing)
 
 <img src="docs/screenshots/panel.png" alt="The AstroBar menu bar panel" width="340">
 

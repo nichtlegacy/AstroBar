@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-label="AstroBar">
+  <!-- Vector twin of the app icon from scripts/build_icon.sh: same squircle,
+       same diagonal indigo -> astro blue -> cyan gradient, same capsule
+       headset glyph and status dot. The soft bloom and edge shading of the
+       .icns master are dropped; neither survives 16px. -->
+  <defs>
+    <linearGradient id="body" gradientUnits="userSpaceOnUse" x1="748" y1="916" x2="268" y2="224">
+      <stop offset="0" stop-color="#101C3F"/>
+      <stop offset="0.52" stop-color="#1E7BD6"/>
+      <stop offset="1" stop-color="#35C4E8"/>
+    </linearGradient>
+    <linearGradient id="glyph" gradientUnits="userSpaceOnUse" x1="512" y1="303" x2="512" y2="721">
+      <stop offset="0" stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#E2EEFB"/>
+    </linearGradient>
+    <radialGradient id="dot" gradientUnits="userSpaceOnUse" cx="678" cy="806" r="68">
+      <stop offset="0" stop-color="#F2FDFF" stop-opacity="0.95"/>
+      <stop offset="0.24" stop-color="#35C4E8" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#35C4E8" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="80" y="80" width="864" height="864" rx="193" fill="url(#body)"/>
+
+  <g fill="url(#glyph)">
+    <path d="M356 555.8 A166 166 0 1 1 668 555.8" fill="none" stroke="url(#glyph)" stroke-width="60" stroke-linecap="round"/>
+    <rect x="274" y="417" width="144" height="304" rx="72"/>
+    <rect x="606" y="417" width="144" height="304" rx="72"/>
+  </g>
+
+  <circle cx="678" cy="806" r="68" fill="url(#dot)"/>
+  <circle cx="678" cy="806" r="12" fill="#F2FDFF"/>
+</svg>

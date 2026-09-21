@@ -1,0 +1,656 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>AstroBar — Astro A50 Gen 4 control panel for macOS</title>
+<meta name="description" content="Battery, equalizer, mix and microphone for the ASTRO A50 Gen 4, in the macOS menu bar. A free, open-source stand-in for Astro Command Center on Apple silicon.">
+<link rel="canonical" href="https://astrobar.nichtlegacy.com/">
+<meta name="author" content="nichtlegacy">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="AstroBar">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://astrobar.nichtlegacy.com/">
+<meta property="og:title" content="AstroBar — Astro A50 Gen 4 control panel for macOS">
+<meta property="og:description" content="Battery, equalizer, mix and microphone for the ASTRO A50 Gen 4, read and written straight over USB from the menu bar. No G HUB, no Command Center, no background service.">
+<meta property="og:image" content="https://astrobar.nichtlegacy.com/og.png">
+<meta property="og:image:secure_url" content="https://astrobar.nichtlegacy.com/og.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The AstroBar menu bar panel beside the words “Astro A50 Gen 4, from the Mac menu bar”.">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AstroBar — Astro A50 Gen 4 control panel for macOS">
+<meta name="twitter:description" content="Battery, equalizer, mix and microphone for the ASTRO A50 Gen 4, straight from the macOS menu bar.">
+<meta name="twitter:image" content="https://astrobar.nichtlegacy.com/og.png">
+<meta name="twitter:image:alt" content="The AstroBar menu bar panel beside the words “Astro A50 Gen 4, from the Mac menu bar”.">
+
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="icon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="app-icon.png">
+
+<link rel="preload" as="image" href="screenshots/panel.webp" type="image/webp" fetchpriority="high">
+<link rel="stylesheet" href="app.css">
+<script src="app.js" defer></script>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://astrobar.nichtlegacy.com/#website",
+      "url": "https://astrobar.nichtlegacy.com/",
+      "name": "AstroBar",
+      "description": "Native macOS menu bar companion for the ASTRO A50 Gen 4 wireless headset.",
+      "inLanguage": "en",
+      "publisher": { "@id": "https://astrobar.nichtlegacy.com/#author" },
+      "about": { "@id": "https://astrobar.nichtlegacy.com/#app" }
+    },
+    {
+      "@type": ["WebPage", "FAQPage"],
+      "@id": "https://astrobar.nichtlegacy.com/#webpage",
+      "url": "https://astrobar.nichtlegacy.com/",
+      "name": "AstroBar — Astro A50 Gen 4 control panel for macOS",
+      "description": "Battery, equalizer, mix and microphone for the ASTRO A50 Gen 4, in the macOS menu bar.",
+      "isPartOf": { "@id": "https://astrobar.nichtlegacy.com/#website" },
+      "about": { "@id": "https://astrobar.nichtlegacy.com/#app" },
+      "primaryImageOfPage": { "@id": "https://astrobar.nichtlegacy.com/#primaryimage" },
+      "datePublished": "2026-09-19",
+      "dateModified": "__BUILD_DATE__",
+      "inLanguage": "en",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Does Astro Command Center work on macOS?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. Astro Command Center was discontinued and never shipped an Apple silicon build, and Logitech G HUB does not cover the A50 Gen 4 at all. AstroBar is an independent, open-source alternative for the Mac: it talks to the same base station over the same USB HID interface." }
+        },
+        {
+          "@type": "Question",
+          "name": "Which ASTRO A50 does AstroBar support?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The A50 Gen 4 with its base station, connected by USB (0x9886:0x002c). The A50 X / Gen 5 from 2024 speaks a completely different protocol and is not supported." }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use AstroBar with just the USB cable, without the base station?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. A Gen 4 headset plugged in by USB cable enumerates as a plain audio device (0x9886:0x002b) that charges but exposes no control interface. Every value AstroBar reads and writes comes from the base station." }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does macOS say AstroBar is damaged?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The project has no Apple Developer account, so the app is ad-hoc signed and not notarized. Only the first launch is affected. Run xattr -dr com.apple.quarantine /Applications/AstroBar.app, or open it once via System Settings, Privacy & Security, Open Anyway." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does AstroBar send any data anywhere?",
+          "acceptedAnswer": { "@type": "Answer", "text": "No. There is no account, no backend, no telemetry and no analytics. Learned battery rates and preferences are stored locally in UserDefaults. The only outbound request is the Sparkle update check, which can be turned off." }
+        },
+        {
+          "@type": "Question",
+          "name": "Are the original Astro Command Center EQ presets included?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Yes. ASTRO, PRO, STUDIO, MEDIA and A50 MOD KIT were recovered from a USB capture of Command Center writing each one to a slot, and ten community presets from The ZEFERENCE by ZaliaS are bundled alongside them. You can also import your own from a JSON file." }
+        },
+        {
+          "@type": "Question",
+          "name": "Does AstroBar run on Intel Macs?",
+          "acceptedAnswer": { "@type": "Answer", "text": "The prebuilt disk images are Apple silicon only (arm64). On an Intel Mac the project builds and runs from source with a current Swift toolchain." }
+        },
+        {
+          "@type": "Question",
+          "name": "How does AstroBar update itself?",
+          "acceptedAnswer": { "@type": "Answer", "text": "Through Sparkle. Every download is verified against an EdDSA signature before it is installed, and nothing is ever installed without asking. Automatic checks can be switched off in Settings." }
+        }
+      ]
+    },
+    {
+      "@type": "ImageObject",
+      "@id": "https://astrobar.nichtlegacy.com/#primaryimage",
+      "url": "https://astrobar.nichtlegacy.com/og.png",
+      "contentUrl": "https://astrobar.nichtlegacy.com/og.png",
+      "width": 1200,
+      "height": 630,
+      "caption": "The AstroBar menu bar panel beside the words “Astro A50 Gen 4, from the Mac menu bar”."
+    },
+    {
+      "@type": "Person",
+      "@id": "https://astrobar.nichtlegacy.com/#author",
+      "name": "nichtlegacy",
+      "url": "https://github.com/nichtlegacy",
+      "sameAs": ["https://github.com/nichtlegacy"]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://astrobar.nichtlegacy.com/#app",
+      "name": "AstroBar",
+      "alternateName": [
+        "Astro A50 menu bar app for Mac",
+        "Astro Command Center alternative for macOS"
+      ],
+      "url": "https://astrobar.nichtlegacy.com/",
+      "description": "Native macOS menu bar companion for the ASTRO A50 Gen 4 wireless headset. Battery, estimated runtime, the full parametric equalizer, mix, microphone and stream output, read and written over USB HID without G HUB or Astro Command Center.",
+      "applicationCategory": "UtilitiesApplication",
+      "applicationSubCategory": "Audio device control",
+      "operatingSystem": "macOS 14.0 or later",
+      "processorRequirements": "Apple silicon (arm64)",
+      "softwareRequirements": "macOS 14+, ASTRO A50 Gen 4 base station connected by USB",
+      "memoryRequirements": "No background service",
+      "softwareVersion": "__VERSION__",
+      "datePublished": "2026-09-19",
+      "fileSize": "3.2 MB",
+      "inLanguage": "en",
+      "image": { "@id": "https://astrobar.nichtlegacy.com/#primaryimage" },
+      "featureList": [
+        "Battery ring, menu bar percentage and low-battery notification",
+        "Estimated time to empty or full, learned from the observed rate",
+        "Resolved power state from dock, radio link and charging bits",
+        "Full parametric equalizer across three device slots",
+        "15 loadable EQ presets with JSON import",
+        "Game/chat mix and alert volume",
+        "Microphone level, side tone, noise gate and mic EQ",
+        "Stream output levels",
+        "Signature-verified automatic updates through Sparkle",
+        "Diagnostic command line tool"
+      ],
+      "downloadUrl": "https://github.com/nichtlegacy/AstroBar/releases/latest",
+      "installUrl": "https://github.com/nichtlegacy/AstroBar/releases/latest",
+      "releaseNotes": "https://github.com/nichtlegacy/AstroBar/releases",
+      "codeRepository": "https://github.com/nichtlegacy/AstroBar",
+      "discussionUrl": "https://github.com/nichtlegacy/AstroBar/issues",
+      "license": "https://opensource.org/licenses/MIT",
+      "isAccessibleForFree": true,
+      "screenshot": [
+        {
+          "@type": "ImageObject",
+          "url": "https://astrobar.nichtlegacy.com/screenshots/panel.webp",
+          "caption": "The AstroBar panel in the macOS menu bar"
+        },
+        {
+          "@type": "ImageObject",
+          "url": "https://astrobar.nichtlegacy.com/screenshots/settings.webp",
+          "caption": "AstroBar settings, About pane with update controls"
+        }
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
+        "url": "https://github.com/nichtlegacy/AstroBar/releases/latest"
+      },
+      "author": { "@id": "https://astrobar.nichtlegacy.com/#author" },
+      "maintainer": { "@id": "https://astrobar.nichtlegacy.com/#author" },
+      "mainEntityOfPage": { "@id": "https://astrobar.nichtlegacy.com/#webpage" }
+    }
+  ]
+}
+</script>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<svg class="sprite" aria-hidden="true" focusable="false">
+  <symbol id="i-github" viewBox="0 0 16 16">
+    <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/>
+  </symbol>
+  <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 3.75v10.5m0 0 4-4m-4 4-4-4M4.25 16.5v2.25a1.75 1.75 0 0 0 1.75 1.75h12a1.75 1.75 0 0 0 1.75-1.75V16.5"/>
+  </symbol>
+  <symbol id="i-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m6 9.5 6 6 6-6"/>
+  </symbol>
+  <symbol id="i-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M4.2 14.5v-2.8a7.8 7.8 0 0 1 15.6 0v2.8"/>
+    <rect x="2.6" y="13" width="3.9" height="7.2" rx="1.95"/>
+    <rect x="17.5" y="13" width="3.9" height="7.2" rx="1.95"/>
+  </symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24">
+    <path fill="currentColor" d="M13.4 2.4 5.8 13.1a.6.6 0 0 0 .49.95h4.05l-1.2 7.2a.6.6 0 0 0 1.08.45l7.83-10.75a.6.6 0 0 0-.49-.95h-4.1l1.02-7.13a.6.6 0 0 0-1.08-.47Z"/>
+  </symbol>
+  <symbol id="i-wifi" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
+    <path d="M2.8 9.1a14 14 0 0 1 18.4 0M6 12.6a9.2 9.2 0 0 1 12 0M9.3 16.1a4.4 4.4 0 0 1 5.4 0"/>
+    <circle cx="12" cy="19.4" r="1.1" fill="currentColor" stroke="none"/>
+  </symbol>
+</svg>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="mark" href="#hero" aria-label="AstroBar, back to top">
+      <svg class="mark-glyph" width="19" height="19" aria-hidden="true"><use href="#i-mark"/></svg>
+      <span>AstroBar</span>
+    </a>
+    <nav class="top-nav" aria-label="Sections">
+      <a href="#panel">Panel</a>
+      <a href="#equalizer">Equalizer</a>
+      <a href="#settings">Settings</a>
+      <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+    <div class="top-actions">
+      <a class="btn ghost" href="https://github.com/nichtlegacy/AstroBar" rel="noopener">
+        <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-github"/></svg>
+        GitHub
+      </a>
+      <a class="btn solid" href="https://github.com/nichtlegacy/AstroBar/releases/latest" rel="noopener">
+        <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-download"/></svg>
+        Download
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" id="hero">
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <p class="tag reveal">Menu bar companion · ASTRO A50 Gen 4</p>
+        <h1 class="reveal">
+          Your A50 kept working.<br>
+          <span class="dim">Its control panel didn’t.</span>
+        </h1>
+        <p class="lede reveal">
+          Astro Command Center was discontinued and never made it to Apple silicon.
+          The base station still exposes everything over USB — battery, the full
+          parametric equalizer, mix, microphone. AstroBar puts all of it back,
+          in the macOS menu bar.
+        </p>
+        <div class="actions reveal">
+          <a class="btn solid lg" href="https://github.com/nichtlegacy/AstroBar/releases/latest" rel="noopener">
+            <svg class="ico" width="17" height="17" aria-hidden="true"><use href="#i-download"/></svg>
+            Download for macOS
+          </a>
+          <a class="btn ghost lg" href="https://github.com/nichtlegacy/AstroBar" rel="noopener">
+            <svg class="ico" width="16" height="16" aria-hidden="true"><use href="#i-github"/></svg>
+            Source
+          </a>
+        </div>
+        <p class="specs reveal">Version __VERSION__ · macOS 14+ · Apple silicon · MIT · 3&nbsp;MB</p>
+      </div>
+
+      <div class="hero-stage reveal">
+        <!-- Menu bar strip above the real capture: the status item is where the
+             panel hangs from, and that relationship is the whole product. -->
+        <div class="menubar" aria-hidden="true">
+          <span class="mb-app">Finder</span>
+          <span class="mb-menus"><span>File</span><span>Edit</span><span>View</span><span>Go</span></span>
+          <span class="mb-spacer"></span>
+          <span class="mb-item mb-active">
+            <svg width="15" height="15" aria-hidden="true"><use href="#i-mark"/></svg>
+            <span class="mb-pct">26%</span>
+            <i class="mb-dot"></i>
+          </span>
+          <svg class="mb-glyph" width="15" height="15" aria-hidden="true"><use href="#i-wifi"/></svg>
+          <span class="mb-clock">Sat 23:41</span>
+        </div>
+        <img class="hero-shot" src="screenshots/panel.webp" width="688" height="1392"
+             alt="The AstroBar panel open below the macOS menu bar, showing a 26 percent charge ring, the charging state, three equalizer slots, mix sliders and microphone controls"
+             fetchpriority="high">
+      </div>
+    </div>
+  </section>
+
+  <section class="band why">
+    <div class="wrap why-inner">
+      <h2 class="reveal">Nothing between the app<br>and the hardware.</h2>
+      <div class="why-body reveal">
+        <p>
+          AstroBar talks to the base station directly through <code>IOHIDManager</code>.
+          No root, no kext, no driver, no helper process, no G HUB in the background.
+          The control interface is a vendor-defined HID endpoint carrying fixed
+          64-byte reports, reverse-engineered by
+          <a href="https://github.com/tdryer/eh-fifty" rel="noopener">tdryer/eh-fifty</a>
+          and re-implemented here in Swift.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section id="panel" class="band alt">
+    <div class="wrap">
+      <header class="band-head reveal">
+        <p class="tag">The panel</p>
+        <h2>One click. Everything the base station knows.</h2>
+        <p class="lede">
+          Click the menu bar icon to open it, click again to close it, like any
+          system menu. Everything except <b>Save</b> applies live; Save writes the
+          values into the headset so they survive a power cycle.
+        </p>
+      </header>
+
+      <div class="bento">
+        <article class="tile w3 reveal">
+          <div class="tile-art">
+            <div class="ring" style="--pct: 26">
+              <svg viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="ring-track" cx="60" cy="60" r="50"/>
+                <circle class="ring-fill" cx="60" cy="60" r="50"/>
+              </svg>
+              <div class="ring-label">
+                <svg class="ring-bolt" width="14" height="14" aria-hidden="true"><use href="#i-bolt"/></svg>
+                <span class="ring-num">26<i>%</i></span>
+              </div>
+            </div>
+            <div class="states">
+              <span class="chip on">Charging</span>
+              <span class="chip">In use</span>
+              <span class="chip">Charged</span>
+              <span class="chip">Off</span>
+            </div>
+          </div>
+          <h3>Battery and power</h3>
+          <p>
+            The hardware reports dock, radio link and charging as three separate
+            bits. The panel resolves them into one answer, and puts the percentage
+            in the menu bar if you want it there.
+          </p>
+          <p>
+            When the headset drops off the radio link the base keeps serving the
+            last level it saw. That reading is marked stale and kept out of both
+            the estimate and the low-battery alert, which fires at a threshold
+            you pick between 5 and 50 %.
+          </p>
+        </article>
+
+        <article class="tile w3 reveal">
+          <div class="tile-art readouts">
+            <div class="readout"><span>Discharging</span><b>4 h 12 m</b><small>to empty</small></div>
+            <div class="readout"><span>Charging on base</span><b>1 h 41 m</b><small>to full</small></div>
+            <div class="readout muted"><span>Charging in use</span><b>—</b><small>not measured yet</small></div>
+          </div>
+          <h3>Estimates it has actually earned</h3>
+          <p>
+            Time to empty or full is learned from the observed rate, kept
+            separately per profile and remembered across restarts. Until a profile
+            has been measured, no number is shown at all.
+          </p>
+        </article>
+
+        <article class="tile w2 reveal">
+          <h3>Mix</h3>
+          <p>Game/chat balance and alert volume, on the same sliders the headset itself has.</p>
+        </article>
+
+        <article class="tile w4 reveal">
+          <h3>Microphone</h3>
+          <p>
+            Level, side tone and mic EQ, plus the noise gate — Streaming, Night,
+            Home or Tournament. The same four the headset’s own button cycles
+            through, except you can see which one you are on.
+          </p>
+        </article>
+
+        <article class="tile w4 reveal">
+          <h3>Local-first, and quiet about it</h3>
+          <p>
+            No account, no backend, no telemetry. Learned rates and preferences sit
+            in <code>UserDefaults</code> on this Mac. The only request that ever
+            leaves the machine is the update check, and that one has a switch.
+          </p>
+        </article>
+
+        <article class="tile w2 reveal">
+          <h3>Stream output</h3>
+          <p>The Mic, Chat, Game and Aux levels going to the base station’s stream port: what an audience hears.</p>
+        </article>
+
+        <article class="tile w6 mono-tile reveal">
+          <h3>Diagnostics</h3>
+          <pre><code>swift run astrobar-cli dump</code></pre>
+          <p><code>astrobar-cli</code> speaks the same protocol from a terminal — handy for a bug report.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="equalizer" class="band">
+    <div class="wrap split eq-split">
+      <div class="split-media reveal">
+        <!-- Not a screenshot: the band editor rebuilt in markup, using the exact
+             preset from the JSON import example in the README. -->
+        <div class="eq" role="img" aria-label="Equalizer editor with five bands at 0, minus 3, 0, plus 2 and plus 4 decibels">
+          <div class="eq-head">
+            <span class="eq-name">MY PRESET</span>
+            <span class="eq-slot">Slot 2</span>
+          </div>
+          <div class="eq-bands">
+            <div class="eq-band" style="--mag: 0"><span class="eq-db">0.0</span><span class="eq-track"><i class="eq-fill up"></i><i class="eq-thumb"></i></span><span class="eq-hz">95</span></div>
+            <div class="eq-band down" style="--mag: 3"><span class="eq-db">−3.0</span><span class="eq-track"><i class="eq-fill down"></i><i class="eq-thumb"></i></span><span class="eq-hz">406</span></div>
+            <div class="eq-band" style="--mag: 0"><span class="eq-db">0.0</span><span class="eq-track"><i class="eq-fill up"></i><i class="eq-thumb"></i></span><span class="eq-hz">783</span></div>
+            <div class="eq-band" style="--mag: 2"><span class="eq-db">+2.0</span><span class="eq-track"><i class="eq-fill up"></i><i class="eq-thumb"></i></span><span class="eq-hz">3901</span></div>
+            <div class="eq-band" style="--mag: 4"><span class="eq-db">+4.0</span><span class="eq-track"><i class="eq-fill up"></i><i class="eq-thumb"></i></span><span class="eq-hz">6339</span></div>
+          </div>
+          <div class="eq-foot">
+            <span>Gain ±7 dB</span>
+            <span>80 – 15 000 Hz</span>
+            <span>Bandwidth 0.1 – 3.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal">
+        <p class="tag">Equalizer</p>
+        <h2>All three slots, every band.</h2>
+        <p class="lede">
+          The A50 has three writable EQ slots. AstroBar edits them properly: per-band
+          gain, centre frequency and bandwidth, renameable inline, applied live.
+        </p>
+        <ul class="facts">
+          <li>Loading a preset only becomes permanent on <b>Save</b>, so you can audition freely and power-cycle to get your originals back</li>
+          <li>Applying a preset is asynchronous in firmware — the write is acknowledged before it takes effect, so the setter polls the read-back</li>
+          <li><b>Import from File…</b> reads JSON presets; anything without exactly five bands is skipped rather than half-written to the hardware</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <div class="presets reveal">
+        <div class="preset-group">
+          <h3>From Astro Command Center</h3>
+          <p class="preset-note">Recovered by <a href="https://github.com/manuacl/astro-a50-gui" rel="noopener">manuacl</a> from a USB capture of Command Center writing each preset to a slot.</p>
+          <ul>
+            <li><b>ASTRO</b><span>The house sound — a pronounced V</span></li>
+            <li><b>PRO</b><span>Bass lift plus a strong presence peak</span></li>
+            <li><b>STUDIO</b><span>Flat low end, brightened on top</span></li>
+            <li><b>MEDIA</b><span>The gentlest of the five</span></li>
+            <li><b>A50 MOD KIT</b><span>Mod Kit cushions only</span></li>
+          </ul>
+        </div>
+        <div class="preset-group">
+          <h3><a href="https://github.com/XxUnkn0wnxX/TheZEFERENCE" rel="noopener">The ZEFERENCE</a> by ZaliaS</h3>
+          <p class="preset-note">Ten community tunings for the Gen 4, converted from the published <code>.astroeq</code> values. The three Tournament presets are variations on one idea — the author’s advice is to try all three. The full collection, including A40, Gen 3 and per-game tunings, is in the <a href="https://github.com/XxUnkn0wnxX/TheZEFERENCE" rel="noopener">source repository</a>.</p>
+          <ul class="two">
+            <li><b>RECTIFY4</b><span>Studio-reference baseline</span></li>
+            <li><b>PURE</b><span>Broad all-rounder</span></li>
+            <li><b>DYSTRILATION</b><span>Detail first</span></li>
+            <li><b>INCENDIARY</b><span>Theatrical weight</span></li>
+            <li><b>KRYOGEN</b><span>Lows and treble</span></li>
+            <li><b>ARCTURUS</b><span>Suits everything</span></li>
+            <li><b>OMNIVOX</b><span>Footstep direction</span></li>
+            <li><b>TOURNAMENT I</b><span>Positional clarity</span></li>
+            <li><b>TOURNAMENT II</b><span>Positional clarity</span></li>
+            <li><b>TOURNAMENT III</b><span>Positional clarity</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="settings" class="band alt">
+    <div class="wrap">
+      <header class="band-head reveal">
+        <h2>Settings</h2>
+      </header>
+
+      <div class="settings-grid">
+        <ul class="panes reveal">
+          <li><b>General</b><span>Launch at login</span></li>
+          <li><b>Menu Bar</b><span>Battery percentage, headphone or battery icon</span></li>
+          <li><b>Notifications</b><span>Low-battery alert and its threshold, 5–50 %</span></li>
+          <li><b>Device</b><span>Connection state, USB id, firmware versions, auto-shutoff</span></li>
+          <li><b>About</b><span>Version, links, and the update controls</span></li>
+        </ul>
+        <figure class="reveal">
+          <img src="screenshots/settings.webp" width="1400" height="1291" loading="lazy"
+               alt="The AstroBar settings window on the About pane, showing version 1.0.0, project links and the Sparkle update controls">
+          <figcaption>Updates run through Sparkle and are verified against an EdDSA signature before anything is installed.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="install" class="band">
+    <div class="wrap">
+      <header class="band-head reveal">
+        <h2>Install</h2>
+      </header>
+
+      <div class="dl">
+        <div class="dl-card reveal">
+          <p class="dl-version">AstroBar __VERSION__</p>
+          <p class="dl-req">macOS 14 or later · Apple silicon · about 3 MB</p>
+          <a class="btn solid lg" href="https://github.com/nichtlegacy/AstroBar/releases/latest" rel="noopener">
+            <svg class="ico" width="17" height="17" aria-hidden="true"><use href="#i-download"/></svg>
+            Download the DMG
+          </a>
+          <p class="dl-hint">Free and open source, via GitHub Releases</p>
+        </div>
+
+        <ol class="dl-steps reveal">
+          <li>
+            Open <code>AstroBar-__VERSION__.dmg</code> and drag <code>AstroBar.app</code> into <em>Applications</em>.
+          </li>
+          <li>
+            Clear the quarantine flag once:
+            <pre><code>xattr -dr com.apple.quarantine /Applications/AstroBar.app</code></pre>
+            Without the terminal: launch it, dismiss the warning, then
+            <em>System Settings → Privacy &amp; Security → Open Anyway</em>.
+          </li>
+          <li>
+            Launch it. No window opens — the icon appears in the menu bar. Plug the
+            base station in by USB if it isn’t already.
+          </li>
+        </ol>
+      </div>
+
+      <p class="note full reveal">
+        The app is ad-hoc signed and <b>not notarized</b>, because this project has no
+        Apple Developer account. macOS claims it is damaged on first launch; it isn’t,
+        and only the first launch is affected. Later updates arrive through
+        <a href="https://sparkle-project.org" rel="noopener">Sparkle</a> and are checked
+        against an EdDSA signature, which does not involve Apple at all.
+      </p>
+    </div>
+  </section>
+
+  <section id="faq" class="band alt">
+    <div class="wrap faq-wrap">
+      <header class="band-head reveal">
+        <h2>FAQ</h2>
+      </header>
+
+      <div class="faq">
+        <details class="reveal">
+          <summary>Does Astro Command Center work on macOS?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            No. It was discontinued and never shipped an Apple silicon build, and
+            Logitech G HUB does not cover the A50 Gen 4 at all. AstroBar is an
+            independent, open-source alternative that talks to the same base
+            station over the same USB HID interface.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>Which ASTRO A50 does AstroBar support?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            The <b>A50 Gen 4</b> with its base station, connected by USB
+            (<code>0x9886:0x002c</code>). The A50 X / Gen 5 from 2024 speaks a
+            completely different protocol and is not supported.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>Can I use it with just the USB cable?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            No. A Gen 4 headset plugged in by cable enumerates as a plain audio
+            device (<code>0x9886:0x002b</code>) that charges but exposes no control
+            interface whatsoever. The base station is where every readable and
+            writable value lives.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>Why does macOS say the app is damaged?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            Because it is ad-hoc signed and not notarized — no Apple Developer
+            account behind it. The download is fine. Clear the quarantine flag with
+            <code>xattr -dr com.apple.quarantine /Applications/AstroBar.app</code>,
+            or use <em>Open Anyway</em> in Privacy &amp; Security.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>Does AstroBar send any data anywhere?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            No. No account, no backend, no telemetry, no analytics. Learned battery
+            rates and preferences live in <code>UserDefaults</code> on your Mac. The
+            only outbound request is the Sparkle update check, and it can be turned off.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>Are the original Command Center presets included?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            Yes — ASTRO, PRO, STUDIO, MEDIA and A50 MOD KIT, recovered from a USB
+            capture of Command Center writing each one to a slot. Ten presets from
+            The ZEFERENCE are bundled alongside, and you can import your own from JSON.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>Does it run on Intel Macs?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            The prebuilt disk images are Apple silicon only. On Intel the project
+            builds and runs from source: <code>git clone</code>, then <code>make install</code>.
+          </p>
+        </details>
+        <details class="reveal">
+          <summary>How do updates work?<svg class="ico chev" width="18" height="18" aria-hidden="true"><use href="#i-chevron"/></svg></summary>
+          <p>
+            Through <a href="https://sparkle-project.org" rel="noopener">Sparkle</a>,
+            in the background and switchable off. Every download is verified against an
+            EdDSA signature before installation, and nothing is installed without asking.
+          </p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <p class="disclaim">
+      Unofficial, independent hobby project. Not affiliated with, endorsed by or
+      sponsored by Logitech or ASTRO Gaming. Product and brand names belong to
+      their respective owners.
+    </p>
+    <p class="credits">
+      Protocol research by <a href="https://github.com/tdryer/eh-fifty" rel="noopener">tdryer/eh-fifty</a> ·
+      EQ presets by <a href="https://github.com/XxUnkn0wnxX/TheZEFERENCE" rel="noopener">ZaliaS</a> ·
+      Command Center presets via <a href="https://github.com/manuacl/astro-a50-gui" rel="noopener">manuacl</a> ·
+      protocol notes from <a href="https://github.com/Sapd/HeadsetControl" rel="noopener">HeadsetControl</a>
+    </p>
+    <div class="foot-meta">
+      <a class="foot-gh" href="https://github.com/nichtlegacy/AstroBar" rel="noopener">
+        <svg class="ico" width="15" height="15" aria-hidden="true"><use href="#i-github"/></svg>
+        nichtlegacy/AstroBar
+      </a>
+      <a href="https://github.com/nichtlegacy/AstroBar/blob/main/LICENSE" rel="noopener">MIT License</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

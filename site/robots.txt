@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://astrobar.nichtlegacy.com/sitemap.xml

@@ -31,3 +31,6 @@ signing.env
 .idea/
 .vscode/
 *.swp
+
+# Landing page build output
+_site/
