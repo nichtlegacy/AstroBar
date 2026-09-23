@@ -27,6 +27,7 @@ cp "$ROOT"/site/*.css "$ROOT"/site/*.js "$ROOT"/site/*.svg "$ROOT"/site/*.png \
    "$ROOT"/site/*.ico "$OUT/"
 cp "$ROOT/site/CNAME" "$ROOT/site/robots.txt" "$OUT/"
 cp -R "$ROOT/site/screenshots" "$OUT/screenshots"
+cp -R "$ROOT/site/fonts" "$OUT/fonts"
 
 # index.html carries both placeholders: the version in the copy and in the
 # structured data, and the build time as the page's dateModified.
