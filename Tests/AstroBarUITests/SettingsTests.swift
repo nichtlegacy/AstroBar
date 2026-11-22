@@ -16,6 +16,16 @@ struct SettingsTests {
         #expect(SettingsTab.allCases == [.general, .menuBar, .notifications, .device, .about])
     }
 
+    @Test("Routing the volume keys is opt-in and persists")
+    func volumeKeysOptIn() {
+        let store = defaults("volume-keys")
+        let settings = AppSettings(defaults: store)
+        #expect(!settings.routeVolumeKeys)
+        settings.routeVolumeKeys = true
+        #expect(store.bool(forKey: "routeVolumeKeysToHeadset"))
+        #expect(AppSettings(defaults: store).routeVolumeKeys)
+    }
+
     @Test("Every tab has a title and an SF Symbol")
     func tabsAreComplete() {
         for tab in SettingsTab.allCases {

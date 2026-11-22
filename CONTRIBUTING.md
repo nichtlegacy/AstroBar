@@ -4,16 +4,20 @@ Thanks for your interest in improving AstroBar — contributions, feedback and h
 reports are very welcome.
 
 AstroBar is a native macOS menu bar app for the **Astro A50 (Gen 4)** wireless headset
-and base station. It talks to the base station directly over USB HID; the wire protocol
-was reverse-engineered by [tdryer/eh-fifty](https://github.com/tdryer/eh-fifty), and the
-app architecture is inspired by [steipete/CodexBar](https://github.com/steipete/CodexBar).
+and base station, with support for the **A50 X** and, untested, the **A50 (Gen 5)**. It
+talks to the base station directly over USB HID. The Gen 4 wire protocol was
+reverse-engineered by [tdryer/eh-fifty](https://github.com/tdryer/eh-fifty), the one the
+A50 X and Gen 5 speak by [Sapd/HeadsetControl](https://github.com/Sapd/HeadsetControl),
+and the app architecture is inspired by
+[steipete/CodexBar](https://github.com/steipete/CodexBar).
 
 ## Requirements
 
 - macOS 14.0 (Sonoma) or later
 - Swift 6.2 toolchain (ships with Xcode 16) — the project is pure SwiftPM, no `.xcodeproj`
-- Optional: an Astro A50 Gen 4 base station. The app and the unit tests run fine without
-  any hardware connected; only live device reads/writes need the real thing.
+- Optional: an Astro A50 Gen 4, A50 X or A50 Gen 5 base station. The app and the unit
+  tests run fine without any hardware connected; only live device reads/writes need the
+  real thing.
 
 ## Getting started
 
@@ -39,9 +43,21 @@ make icon                   # regenerate the app icon (.icns)
 |---------------|----------|
 | `Sources/AstroBarCore` | HID transport, A50 protocol, models — no UI, fully unit-testable |
 | `Sources/AstroBar`     | The SwiftUI/AppKit menu bar app (popover, settings, status item) |
-| `Sources/AstroBarCLI`  | `astrobar-cli` diagnostic tool (`dump`, `get-eq`, `set-eq`, `selftest-write`) |
+| `Sources/AstroBarCLI`  | `astrobar-cli` diagnostic tool (`dump`, `get-eq`, `set-eq`, `selftest-write`; `x-status`, `x-volume`, `x-probe` for the A50 X / Gen 5) |
 | `Tests`        | `AstroBarCoreTests` (decoding/logic) and `AstroBarUITests` (offscreen render snapshots) |
 | `scripts/`     | `package_app.sh` (bundle + ad-hoc signing), `build_icon.sh` |
+
+## Device families
+
+The maintainer owns a Gen 4 only. The A50 X / Gen 5 path was contributed by an A50 X
+owner, who tested it on that hardware. It cannot be checked here, so changes to it need
+a note in the pull request on which model they were tested on.
+
+Each family is one case of `DeviceFamily` in `AstroBarCore`, with the capabilities the UI
+asks for. Do not branch on a model in a view — add a capability instead. A new family
+brings its own transport and device actor in `AstroBarCore`, unit tests built from frames
+captured on real hardware, a session object in the app for its state, and a panel view.
+A change for one family must not alter what another one does.
 
 ## How to contribute
 
@@ -73,17 +89,25 @@ mic settings sends actual HID write reports to the base station.
 - `astrobar-cli set-eq <1-3>` writes the active EQ preset.
 - `astrobar-cli selftest-write` verifies writes end-to-end: it toggles the active EQ
   preset, reads the value back and then restores the original preset.
+- Quit AstroBar before running a CLI command that writes. Both processes receive every
+  reply from the base station, so the app's polling can hand the CLI an answer to a
+  different question: `selftest-write` then reports a mismatch and may leave the other
+  preset active.
 - Test EQ and slider changes in the app UI only with a base station connected that you
   are okay with being reconfigured.
 - Remember: with the headset docked on the base station the full feature set works; over
   a direct USB cable the device enumerates in cable mode and only charging works.
+- A50 X / Gen 5: `astrobar-cli x-status` and `x-probe` only read. `x-volume <0-21>` sets
+  the headset volume, and the sliders in the panel write as soon as you let go.
 
 ## Reporting issues
 
 When reporting a bug, please include:
 
 - Headset and base station firmware versions (visible in the dump output).
-- The output of `swift run astrobar-cli dump` (safe, read-only).
+- The output of `swift run astrobar-cli dump` (safe, read-only) — on an A50 X or Gen 5,
+  `x-status` and `x-probe` instead.
+- Which headset: A50 Gen 4, A50 X or A50 Gen 5.
 - Whether the headset is connected via base station or USB cable.
 - macOS version and AstroBar version/commit.
 

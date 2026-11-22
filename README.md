@@ -6,15 +6,17 @@
 <br>
 Battery, equalizer, mix and microphone — read *and* written straight over USB HID.
 No Logitech G HUB, no Astro Command Center, no background service.
+<br>
+Also supports the A50 X, and the A50 (Gen 5) experimentally — see [Supported headsets](#supported-headsets).
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-000000?logo=apple&logoColor=white)](https://www.apple.com/macos/)
 [![Swift 6.2](https://img.shields.io/badge/Swift-6.2-F05138?logo=swift&logoColor=white)](https://swift.org)
 [![SwiftUI + AppKit](https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-2563EB)](#architecture)
 [![Dependencies: Sparkle](https://img.shields.io/badge/Dependencies-Sparkle-22C55E)](#updates)
-[![Tests](https://img.shields.io/badge/Tests-67%20green-16A34A)](#development)
+[![Tests](https://img.shields.io/badge/Tests-84%20green-16A34A)](#development)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[Website](https://astrobar.nichtlegacy.com) • [Overview](#overview) • [Install](#install) • [The panel](#the-panel) • [Equalizer presets](#equalizer-presets) • [Settings](#settings) • [Architecture](#architecture) • [Development](#development) • [Releasing](#releasing)
+[Website](https://astrobar.nichtlegacy.com) • [Overview](#overview) • [Supported headsets](#supported-headsets) • [Install](#install) • [The panel](#the-panel) • [Equalizer presets](#equalizer-presets) • [Settings](#settings) • [Architecture](#architecture) • [Development](#development) • [Releasing](#releasing)
 
 <img src="docs/screenshots/panel.png" alt="The AstroBar menu bar panel" width="340">
 
@@ -64,17 +66,41 @@ The project stays deliberately:
   is what an audience hears: Mic, Chat, Game, Aux.
 - **Automatic updates** — signature-verified, through Sparkle.
 - **Diagnostic CLI** — `astrobar-cli` speaks the same protocol from a terminal.
+- **A50 X, and A50 Gen 5 (experimental)** — battery, headset volume, sidetone,
+  noise gate and the base station light, with the Mac's volume keys optionally
+  driving the headset. See [Supported headsets](#supported-headsets).
 
 ## Requirements
 
 - macOS 14 (Sonoma) or later
-- An ASTRO A50 **Gen 4** with its base station, connected by USB
+- A supported ASTRO A50 with its base station, connected by USB — see below
 - To build: Xcode 26 or a current Apple Swift 6.2 toolchain
 
-> **Not supported:** the A50 X / Gen 5 (2024+) speaks a completely different
-> protocol from the Logitech G HUB family. Plugging a Gen 4 headset in by USB
-> *cable* enumerates as a plain audio device (`0x9886:0x002b`) that charges but
-> exposes no control interface at all.
+## Supported headsets
+
+| Headset | USB id | Status | What works |
+|---|---|---|---|
+| **A50 Gen 4** | `9886:002c` | Fully supported, developed and tested on this hardware | Everything on this page |
+| **A50 X** | `046d:0b0b` | Supported, contributed and tested on hardware by an A50 X owner | Battery, headset volume, game/voice mix (read-only), sidetone, noise gate, base station light, volume keys |
+| **A50 Gen 5** | `046d:0b1c` | Experimental, **untested** — same protocol as the A50 X, no unit on hand | Same as the A50 X, on paper |
+
+The Gen 4 and the Logitech-era models speak two unrelated protocols, so each
+gets its own panel. What the A50 X / Gen 5 path does **not** have yet: the
+equalizer, a writable game/voice mix, firmware versions, and a way to tell
+whether the headset is powered on — these base stations answer the same either
+way, so the panel shows the headset as on whenever the base responds.
+
+On the A50 X, everything in the table was confirmed on hardware, reads and
+writes. The Gen 5 uses the same frames, which
+[HeadsetControl](https://github.com/Sapd/HeadsetControl) verified on that model,
+but AstroBar itself has not run against one. The maintainer owns a Gen 4 only,
+so if you own either Logitech-era model, a report in
+[Issues](https://github.com/nichtlegacy/AstroBar/issues) with the output of
+`astrobar-cli x-status` and `x-probe` is the most useful thing you can send.
+
+> **Not supported:** a Gen 4 headset plugged in by USB *cable* enumerates as a
+> plain audio device (`0x9886:0x002b`) that charges but exposes no control
+> interface at all. Older generations (Gen 3 and earlier) are not covered.
 
 ## Install
 
@@ -126,9 +152,39 @@ red on failure, then goes back.
 | **Microphone** | Mic level, side tone, noise gate, mic EQ |
 | **Stream output** | Collapsed by default — the levels your audience hears |
 
+### A50 X and A50 Gen 5
+
+These models get a shorter panel of their own, and every control applies as you
+set it — there is nothing to save.
+
+| Section | What it does |
+|---|---|
+| **Header** | Charge ring, model, and whether the headset is on the base |
+| **Headset** | The headset's own volume — the level its wheel changes, in the same 22 steps — and the current game/voice mix |
+| **Settings** | Sidetone, microphone noise gate (Off / Night / Tournament) and the brightness of the base station light. A row appears once the device has reported its value |
+
+#### Volume keys
+
+macOS has no volume control for these headsets, so with one selected as the
+sound output the Mac's volume keys do nothing. **Volume keys control the
+headset** in the Headset card routes them to the headset's own volume instead,
+with a small level indicator on screen. It is off until you turn it on.
+
+- It needs the **Accessibility** permission, because only an event tap can
+  catch those keys. AstroBar asks for it only when you press **Allow…**.
+- The keys are taken over only while the headset is connected *and* is the
+  Mac's current sound output. With any other output they behave as usual, and
+  the tap is removed when the headset disconnects or the option is turned off.
+- **After an update the permission has to be granted again.** macOS ties it to
+  the code signature, and without an Apple Developer account every release is
+  signed ad hoc, which makes each one a different app as far as the system is
+  concerned. If the switch in System Settings → Privacy & Security →
+  Accessibility still looks on but the keys do nothing, remove AstroBar from
+  that list and add it again.
+
 ## Equalizer presets
 
-The A50 has three writable EQ slots. AstroBar ships 15 tunings you can load into
+The Gen 4 has three writable EQ slots. AstroBar ships 15 tunings you can load into
 any of them from the menu next to the preset's name field. Loading one overwrites
 that slot's name, gains and all five bands — but only becomes permanent once you
 press **Save**, so you can audition freely and power-cycle the headset to get
@@ -247,16 +303,22 @@ URL, which is the case under `swift run`.
 flowchart TB
     subgraph hw["Hardware"]
         BASE["A50 Gen 4 base station<br/>USB 0x9886:0x002c"]
+        XBASE["A50 X / Gen 5 base station<br/>USB 0x046d:0x0b0b / 0x0b1c"]
     end
 
     subgraph core["AstroBarCore — no UI, unit tested"]
         TRANSPORT["HIDTransport<br/>IOHIDManager on its own run loop"]
         FRAME["A50Frame<br/>encode / parse / decode errors"]
         DEVICE["A50Device (actor)<br/>typed commands, one request in flight"]
+        XTRANSPORT["A50XTransport<br/>replies matched by command, pushes forwarded"]
+        XDEVICE["A50XDevice (actor)<br/>A50XFrame / A50XValue"]
+        FAMILY["DeviceFamily<br/>model name, capabilities"]
     end
 
     subgraph app["AstroBar — the app"]
         MONITOR["A50Monitor<br/>@Observable source of truth"]
+        SESSION["LogitechSession<br/>A50 X / Gen 5 state"]
+        KEYS["VolumeKeyRouter<br/>opt-in event tap + level indicator"]
         EST["BatteryEstimator<br/>rate per profile"]
         PANEL["MenuPanelView<br/>SwiftUI in an NSPanel"]
         SETTINGS["Settings window"]
@@ -271,6 +333,12 @@ flowchart TB
     FRAME <--> DEVICE
     DEVICE -->|"poll every 8s"| MONITOR
     MONITOR -->|"writes on commit"| DEVICE
+    XBASE <-->|"64-byte HID reports"| XTRANSPORT
+    XTRANSPORT <--> XDEVICE
+    XDEVICE <-->|"poll + pushes, writes"| SESSION
+    SESSION --> MONITOR
+    FAMILY --> MONITOR
+    KEYS --> SESSION
     MONITOR --> EST
     EST <--> DEFAULTS
     MONITOR --> PANEL
@@ -306,6 +374,30 @@ Three firmware behaviours the code works around, all confirmed against hardware:
   answering with the last known battery level after the link drops, so those
   readings are marked stale and kept out of the estimator and the alert.
 
+### A second protocol: A50 X and Gen 5
+
+The Logitech-era base stations use the same usage page and report size but an
+unrelated command set, documented for the Gen 5 by
+[Sapd/HeadsetControl](https://github.com/Sapd/HeadsetControl) and confirmed on
+an A50 X by the contributor of that code path:
+
+- Frame: `[0x02, 0x0c, length, 0x00, command, handle, …payload]`, zero-padded to
+  64 bytes. The length counts the three bytes after it plus the payload.
+- A read is a frame without payload; the reply repeats the command and carries
+  the value. The handle is only an echo token.
+- The base also **pushes** the same frames on its own — turning the volume wheel,
+  pressing a mix button — so a reply is matched by command, and every frame that
+  carries a value is forwarded to the app.
+- A write is acknowledged with an empty frame and nothing else.
+
+### Adding another headset
+
+A device family is one case of `DeviceFamily` in `AstroBarCore`, which names
+the model and lists its capabilities; the panel, the footer and the status menu
+ask for those instead of checking for a model. A new family needs a transport
+and device actor in `AstroBarCore` with unit tests against captured frames, a
+session object in the app that holds its state, and a panel view for it.
+
 ### Packages
 
 | Package | Kind | Purpose |
@@ -326,6 +418,14 @@ swift run astrobar-cli selftest-write   # toggle EQ preset and restore it (write
 swift run astrobar-cli probe-error      # hex-dump the device's error frames
 ```
 
+For the A50 X and A50 Gen 5:
+
+```sh
+swift run astrobar-cli x-status         # battery, volume and game/voice mix
+swift run astrobar-cli x-probe          # read-only hex dump of the settings replies
+swift run astrobar-cli x-volume 12      # set the headset volume, 0–21 (writes!)
+```
+
 ## Development
 
 ```sh
@@ -334,6 +434,14 @@ swift build && swift test          # no hardware required
 make dmg                           # distributable disk image
 make icon                          # regenerate the app icon
 ```
+
+Two environment variables adjust a local build; official releases use neither,
+and `scripts/release.sh` refuses to run with either one set:
+
+| Variable | Effect |
+|---|---|
+| `ASTROBAR_SIGN_IDENTITY` | Sign with this keychain certificate instead of ad hoc, so a rebuild keeps permissions such as Accessibility |
+| `ASTROBAR_FEED_URL=""` | Build without an update feed, so a fork is not offered the official releases |
 
 Unit and render tests run without a device; only live reads and writes need
 hardware. See [CONTRIBUTING.md](CONTRIBUTING.md) for code style and PR guidelines.
@@ -379,6 +487,9 @@ AstroBar stands on work other people did first.
 - **[Sapd/HeadsetControl](https://github.com/Sapd/HeadsetControl)** — protocol
   notes that corrected real bugs here, in particular that the base station keeps
   serving the last known battery level after the headset drops off the radio link.
+  Its A50 Gen 5 driver is also the documentation the A50 X / Gen 5 path is built on.
+- **[erik-sutton95](https://github.com/erik-sutton95)** — A50 X support: the
+  second device path, captured frames from real hardware, and the volume keys.
 - **[Sparkle](https://sparkle-project.org)** — in-app updates.
 - App architecture inspired by
   [steipete/CodexBar](https://github.com/steipete/CodexBar).

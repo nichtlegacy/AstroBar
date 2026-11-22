@@ -142,7 +142,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         menu.addItem(statusLineItem())
         menu.addItem(.separator())
 
-        if monitor.status == .connected {
+        if monitor.status == .connected, monitor.capabilities.contains(.equalizerPresets) {
             addPresetItems(to: menu)
             menu.addItem(.separator())
         }
@@ -365,7 +365,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard monitor.status == .connected, let battery = monitor.battery else {
             return "AstroBar"
         }
-        var text = "ASTRO A50 — \(battery.chargePercent)%, \(monitor.powerState.label.lowercased())"
+        var text = "\(monitor.modelName) — \(battery.chargePercent)%, \(monitor.powerState.label.lowercased())"
         if let projection = monitor.batteryProjection,
            let formatted = BatteryRuntimeFormatter.text(for: projection) {
             text += " (\(formatted))"

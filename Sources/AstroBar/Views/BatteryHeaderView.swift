@@ -82,7 +82,7 @@ struct BatteryHeaderView: View {
     }
 
     private var modelName: some View {
-        Text("ASTRO A50")
+        Text(monitor.modelName)
             // Hand-set weight, so it has to answer to the Bold Text setting.
             .font(.system(
                 size: 18,

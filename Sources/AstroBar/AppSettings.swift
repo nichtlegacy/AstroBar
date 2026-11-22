@@ -33,6 +33,12 @@ final class AppSettings {
         didSet { defaults.set(lowBatteryThreshold, forKey: Keys.lowThreshold) }
     }
 
+    /// Route the Mac's volume keys to the headset's own volume (A50 X / Gen 5).
+    /// Off by default: it needs Accessibility access and swallows the keys.
+    var routeVolumeKeys: Bool {
+        didSet { defaults.set(routeVolumeKeys, forKey: Keys.routeVolumeKeys) }
+    }
+
     /// Thresholds offered in Settings. Fine steps near empty, where the choice
     /// actually matters, and coarser ones above.
     static let lowBatteryThresholds = [5, 10, 15, 20, 25, 30, 40, 50]
@@ -43,6 +49,7 @@ final class AppSettings {
         static let iconStyle = "menuBarIconStyle"
         static let lowNotify = "lowBatteryNotify"
         static let lowThreshold = "lowBatteryThreshold"
+        static let routeVolumeKeys = "routeVolumeKeysToHeadset"
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -51,6 +58,7 @@ final class AppSettings {
         self.iconStyle = (defaults.string(forKey: Keys.iconStyle))
             .flatMap(MenuBarIconStyle.init(rawValue:)) ?? .headphones
         self.lowBatteryNotify = defaults.bool(forKey: Keys.lowNotify)
+        self.routeVolumeKeys = defaults.bool(forKey: Keys.routeVolumeKeys)
         let storedThreshold = defaults.object(forKey: Keys.lowThreshold) as? Int ?? 15
         self.lowBatteryThreshold = Self.lowBatteryThresholds.contains(storedThreshold)
             ? storedThreshold

@@ -12,7 +12,9 @@ source "$ROOT/version.env"
 # Sparkle checks updates against this EdDSA public key; the private half lives in
 # the login keychain and never leaves this machine. The feed is served straight
 # from the repository so no extra hosting is needed.
-FEED_URL="https://raw.githubusercontent.com/nichtlegacy/AstroBar/main/appcast.xml"
+# Set ASTROBAR_FEED_URL to an empty string to build without an update feed:
+# a local build of a fork would otherwise be offered the official releases.
+FEED_URL="${ASTROBAR_FEED_URL-https://raw.githubusercontent.com/nichtlegacy/AstroBar/main/appcast.xml}"
 SPARKLE_PUBLIC_KEY="AUirFpMVvlCOQcflFJ5exmSeZmJ/CwevT5+vkHvQs/8="
 SPARKLE_FRAMEWORK="$ROOT/.build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
 
@@ -52,6 +54,15 @@ done
 
 GIT_COMMIT="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
 
+UPDATER_KEYS=""
+if [ -z "$FEED_URL" ]; then
+    echo "› No update feed (ASTROBAR_FEED_URL is empty): this build will not check for updates."
+else
+    UPDATER_KEYS="    <key>SUFeedURL</key><string>${FEED_URL}</string>
+    <key>SUPublicEDKey</key><string>${SPARKLE_PUBLIC_KEY}</string>
+    <key>SUEnableAutomaticChecks</key><true/>"
+fi
+
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -69,9 +80,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 ${ICON_KEY}
     <key>NSHumanReadableCopyright</key><string>© 2026 nichtlegacy. MIT License.</string>
     <key>AstroBarGitCommit</key><string>${GIT_COMMIT}</string>
-    <key>SUFeedURL</key><string>${FEED_URL}</string>
-    <key>SUPublicEDKey</key><string>${SPARKLE_PUBLIC_KEY}</string>
-    <key>SUEnableAutomaticChecks</key><true/>
+${UPDATER_KEYS}
 </dict>
 </plist>
 PLIST
@@ -80,14 +89,23 @@ PLIST
 # that contains it. Without an Apple Developer account there is no Developer ID
 # and no notarization, so a downloaded build always meets Gatekeeper once.
 # Sparkle verifies updates by EdDSA signature, which does not depend on Apple.
-echo "› Signing (ad-hoc)…"
+# ASTROBAR_SIGN_IDENTITY names a certificate in the keychain to sign with
+# instead. macOS ties permissions such as Accessibility to the signature, and
+# an ad-hoc signature changes with every build, so a fixed identity is what
+# lets a local rebuild keep the permission it was given.
+SIGN_ID="${ASTROBAR_SIGN_IDENTITY:--}"
+if [ "$SIGN_ID" = "-" ]; then
+    echo "› Signing (ad-hoc)…"
+else
+    echo "› Signing with \"$SIGN_ID\"…"
+fi
 SPARKLE_IN_APP="$APP/Contents/Frameworks/Sparkle.framework"
-codesign --force --sign - --timestamp=none "$SPARKLE_IN_APP/Versions/B/XPCServices/Downloader.xpc"
-codesign --force --sign - --timestamp=none "$SPARKLE_IN_APP/Versions/B/XPCServices/Installer.xpc"
-codesign --force --sign - --timestamp=none "$SPARKLE_IN_APP/Versions/B/Updater.app"
-codesign --force --sign - --timestamp=none "$SPARKLE_IN_APP/Versions/B/Autoupdate"
-codesign --force --sign - --timestamp=none "$SPARKLE_IN_APP"
-codesign --force --sign - --timestamp=none "$APP"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$SPARKLE_IN_APP/Versions/B/XPCServices/Downloader.xpc"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$SPARKLE_IN_APP/Versions/B/XPCServices/Installer.xpc"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$SPARKLE_IN_APP/Versions/B/Updater.app"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$SPARKLE_IN_APP/Versions/B/Autoupdate"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$SPARKLE_IN_APP"
+codesign --force --sign "$SIGN_ID" --timestamp=none "$APP"
 codesign --verify --deep --strict "$APP"
 
 echo "✓ Built $APP"

@@ -3,26 +3,18 @@ import Foundation
 import Observation
 import SwiftUI
 
-/// Connection state shown in the UI.
-enum ConnectionStatus: Equatable {
-    case scanning
-    case connected
-    case cableMode
-    case disconnected
-}
-
 /// The app's single source of truth. Owns the `A50Device`, polls live values,
 /// and applies user edits optimistically.
 @MainActor
 @Observable
 final class A50Monitor {
-    // Connection
-    private(set) var status: ConnectionStatus = .scanning
-    private(set) var lastError: String?
+    // Connection. The state below is not private(set): A50Monitor+Logitech.swift writes it too.
+    var status: ConnectionStatus = .scanning
+    var lastError: String?
 
     // Live power state
-    private(set) var battery: BatteryStatus?
-    private(set) var headset: HeadsetStatus?
+    var battery: BatteryStatus?
+    var headset: HeadsetStatus?
 
     // Equalizer
     var activePreset: Int = 1
@@ -46,6 +38,11 @@ final class A50Monitor {
     var systemVolume: Double = 0
     private(set) var hasAudioDevice = false
 
+    /// A50 X / A50 Gen 5 state; non-nil exactly while such a base station is
+    /// connected. Only `syncLogitechSession()` creates or drops it.
+    var logitech: LogitechSession?
+    let volumeKeys = VolumeKeyRouter()
+
     /// How long the charge will last, or how long it still needs to fill up,
     /// estimated from the observed rate. Nil until enough has been measured.
     private(set) var batteryProjection: BatteryEstimator.Projection?
@@ -64,17 +61,20 @@ final class A50Monitor {
     }
 
     // Info
-    private(set) var deviceInfo: DeviceInfo?
-    private(set) var baseFirmware: FirmwareVersion?
-    private(set) var headsetFirmware: FirmwareVersion?
-    private(set) var autoShutoffTimer: Int?
+    var deviceInfo: DeviceInfo?
+    var baseFirmware: FirmwareVersion?
+    var headsetFirmware: FirmwareVersion?
+    var autoShutoffTimer: Int?
 
     /// User preferences (set by AppDelegate); drives the low-battery alert.
     var settings: AppSettings?
 
-    private let device = A50Device()
+    let device = A50Device()
+    let xDevice = A50XDevice()
+    /// Set when the Gen 4 has to be re-read once the X is out of the way.
+    var gen4LoadDeferred = false
     private var pollTask: Task<Void, Never>?
-    private var loadTask: Task<Void, Never>?
+    var loadTask: Task<Void, Never>?
     private var started = false
     private var lowBatteryAlarm = LowBatteryAlarm(threshold: 15)
     private var batteryEstimator = BatteryEstimator(store: .userDefaults())
@@ -189,6 +189,7 @@ final class A50Monitor {
             }
         }
         Task { await device.start() }
+        startLogitech()
         startPolling()
     }
 
@@ -204,28 +205,45 @@ final class A50Monitor {
 
     private func handleConnectionChange(_ connected: Bool) async {
         if connected {
+            // With an X active its panel is shown; the Gen 4 is read as soon as
+            // the X goes away (see `syncLogitechSession`).
+            if xDevice.isConnected {
+                gen4LoadDeferred = true
+                return
+            }
+            gen4LoadDeferred = false
             status = .connected
             lastError = nil
             loadAll()
-        } else {
+        } else if !xDevice.isConnected {
             await refreshDisconnectedStatus()
         }
     }
 
     private func tick() async {
-        if device.isConnected {
+        syncLogitechSession()
+        if let logitech {
+            await refreshLogitech(logitech)
+        } else if device.isConnected {
             await refreshDynamic()
         } else {
             await refreshDisconnectedStatus()
         }
+        updateVolumeKeys()
     }
 
-    private func refreshDisconnectedStatus() async {
+    func refreshDisconnectedStatus() async {
+        // The error or callback asking for this may be out of date: a connected base keeps its panel.
+        guard !device.isConnected, !xDevice.isConnected else { return }
         if USBPresence.cableModeConnected() {
             status = .cableMode
         } else if status != .scanning || battery != nil {
             status = .disconnected
         }
+        resetBatteryTracking()
+    }
+
+    func resetBatteryTracking() {
         battery = nil
         headset = nil
         batteryProjection = nil
@@ -237,10 +255,16 @@ final class A50Monitor {
     /// Cheap values that change at runtime.
     func refreshDynamic() async {
         do {
-            battery = try await device.batteryStatus()
-            headset = try await device.headsetStatus()
+            // An X that connected during one of these reads owns the panel now.
+            let charge = try await device.batteryStatus()
+            guard logitech == nil else { return }
+            battery = charge
+            let link = try await device.headsetStatus()
+            guard logitech == nil else { return }
+            headset = link
             if status != .connected { status = .connected }
         } catch {
+            guard logitech == nil else { return }
             note(error)
         }
         refreshVolume()
@@ -253,7 +277,7 @@ final class A50Monitor {
     /// A stale reading must not reach the estimator: it would sit at a fixed
     /// percentage for as long as the headset is off and then jump when it comes
     /// back, which reads as an enormous change over that whole gap.
-    private func updateBatteryProjection() {
+    func updateBatteryProjection() {
         guard let battery, !batteryIsStale, let profile = powerState.batteryProfile else {
             batteryProjection = nil
             batteryEstimator.record(percent: battery?.chargePercent ?? 0, profile: nil)
@@ -266,7 +290,7 @@ final class A50Monitor {
 
     /// Fire a one-shot notification when the battery crosses below the
     /// configured threshold (re-arms once it recovers or starts charging).
-    private func checkLowBattery() {
+    func checkLowBattery() {
         guard let settings, settings.lowBatteryNotify, let battery, !batteryIsStale else { return }
         if lowBatteryAlarm.threshold != settings.lowBatteryThreshold {
             lowBatteryAlarm = LowBatteryAlarm(threshold: settings.lowBatteryThreshold)
@@ -307,8 +331,9 @@ final class A50Monitor {
             if Task.isCancelled { throw CancellationError() }
         }
         do {
-            battery = try await device.batteryStatus()
-            headset = try await device.headsetStatus()
+            let (charge, link) = (try await device.batteryStatus(), try await device.headsetStatus())
+            try checkpoint()
+            (battery, headset) = (charge, link)
             activePreset = try await device.activeEQPreset()
             for preset in A50Limits.eqPresets {
                 try checkpoint()
@@ -328,14 +353,18 @@ final class A50Monitor {
             alertVolume = try await device.alertVolume()
             micEQ = try await device.micEQ()
             noiseGate = try await device.noiseGateMode()
-            autoShutoffTimer = try? await device.autoShutoffTimer()
-            deviceInfo = try? await device.deviceInfo()
-            baseFirmware = try? await device.baseFirmwareVersion()
-            headsetFirmware = try? await device.headsetFirmwareVersion()
+            let timer = try? await device.autoShutoffTimer()
+            let info = try? await device.deviceInfo()
+            let base = try? await device.baseFirmwareVersion()
+            let headsetVersion = try? await device.headsetFirmwareVersion()
+            // Published together and only if still current: these describe the
+            // device in Settings, and another family may have taken over since.
+            try checkpoint()
+            (autoShutoffTimer, deviceInfo, baseFirmware, headsetFirmware) = (timer, info, base, headsetVersion)
         } catch is CancellationError {
             // Superseded by a newer load; keep whatever state it collected.
         } catch {
-            note(error)
+            if !Task.isCancelled { note(error) }
         }
         refreshVolume()
     }
@@ -365,7 +394,7 @@ final class A50Monitor {
             }
             presetBands[preset] = bands
         } catch {
-            note(error)
+            if !Task.isCancelled, logitech == nil { note(error) }
         }
     }
 
@@ -441,13 +470,12 @@ final class A50Monitor {
         Task {
             do {
                 try await operation()
-                lastError = nil
+                // A Gen 4 write that finishes after an X took over says nothing about the X.
+                if logitech == nil { lastError = nil }
                 completion?(true)
             } catch {
-                note(error)
-                if device.isConnected {
-                    loadAll()
-                }
+                if logitech == nil { note(error) }
+                if device.isConnected, logitech == nil { loadAll() }
                 completion?(false)
             }
         }
@@ -459,7 +487,7 @@ final class A50Monitor {
         lastError = message
     }
 
-    private func note(_ error: Error) {
+    func note(_ error: Error) {
         if let a50 = error as? A50Error {
             if case .deviceNotConnected = a50 {
                 Task { await refreshDisconnectedStatus() }

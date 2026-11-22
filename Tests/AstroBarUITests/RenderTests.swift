@@ -1,4 +1,5 @@
 import AppKit
+import AstroBarCore
 import SwiftUI
 import Testing
 @testable import AstroBar
@@ -23,7 +24,19 @@ struct RenderTests {
     func rootPanel() {
         let monitor = A50Monitor()
         monitor.seedPreview()
+        // The Gen 4 panel depends on these: Save and the preset menu are gated on them.
+        #expect(monitor.family == .gen4)
+        #expect(monitor.capabilities.contains(.saveToDevice))
+        #expect(monitor.capabilities.contains(.equalizerPresets))
         render(MenuPanelView(monitor: monitor), to: "/tmp/panel_root.png")
+    }
+
+    @Test("render A50 X panel")
+    func logitechPanel() {
+        let monitor = A50Monitor()
+        monitor.seedLogitechPreview()
+        #expect(monitor.family == .logitech(productID: A50X.a50XProductID))
+        render(MenuPanelView(monitor: monitor), to: "/tmp/panel_logitech.png")
     }
 
     @Test("render EQ editor")

@@ -53,17 +53,22 @@ struct FooterView: View {
             }
 
             HStack(spacing: 8) {
-                Button {
-                    save()
-                } label: {
-                    Label(saveState?.title ?? "Save", systemImage: saveState?.symbol ?? "internaldrive")
-                        .contentTransition(.identity)
+                // Families without this capability apply values as they are
+                // set; there is nothing to persist separately. With nothing
+                // connected the button stays, as it always has.
+                if monitor.family?.capabilities.contains(.saveToDevice) ?? true {
+                    Button {
+                        save()
+                    } label: {
+                        Label(saveState?.title ?? "Save", systemImage: saveState?.symbol ?? "internaldrive")
+                            .contentTransition(.identity)
+                    }
+                    .tint(saveState?.tint)
+                    .disabled(saveState == .saving)
+                    .help("Persist current values to the headset so they survive a power cycle.")
+                    .accessibilityLabel("Save to headset")
+                    .accessibilityValue(saveState?.title ?? "")
                 }
-                .tint(saveState?.tint)
-                .disabled(saveState == .saving)
-                .help("Persist current values to the headset so they survive a power cycle.")
-                .accessibilityLabel("Save to headset")
-                .accessibilityValue(saveState?.title ?? "")
 
                 Spacer()
 

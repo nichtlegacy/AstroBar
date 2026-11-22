@@ -205,6 +205,9 @@ struct TrackSlider: View {
     var label: String
     var valueLabel: (Double) -> String
     var onCommit: (Double) -> Void
+    /// Reports when a drag starts and ends, for owners that must not apply
+    /// outside updates to the value while it is being dragged.
+    var onEditingChanged: (Bool) -> Void = { _ in }
 
     /// True between the slider reporting the start and the end of a drag.
     @State private var isDragging = false
@@ -212,6 +215,7 @@ struct TrackSlider: View {
     var body: some View {
         Slider(value: snapped, in: range) { editing in
             isDragging = editing
+            onEditingChanged(editing)
             if !editing { onCommit(value) }
         }
         .controlSize(.small)
@@ -244,6 +248,7 @@ struct LabeledSlider: View {
     @Binding var value: Double
     var valueLabel: (Double) -> String
     var onCommit: (Double) -> Void
+    var onEditingChanged: (Bool) -> Void = { _ in }
     var tint: Color = .accentColor
 
     var body: some View {
@@ -263,7 +268,8 @@ struct LabeledSlider: View {
                 tint: tint,
                 label: title,
                 valueLabel: valueLabel,
-                onCommit: onCommit)
+                onCommit: onCommit,
+                onEditingChanged: onEditingChanged)
         }
     }
 }

@@ -7,11 +7,14 @@ import Foundation
 //   astrobar-cli get-eq           print the active EQ preset
 //   astrobar-cli set-eq <1-3>     set the active EQ preset
 //   astrobar-cli selftest-write   toggle the EQ preset and restore it (writes!)
+//   astrobar-cli x-status         A50 X / Gen 5: battery, volume and mix
+//   astrobar-cli x-volume <0-21>  A50 X / Gen 5: set the headset volume
+//   astrobar-cli x-probe          A50 X / Gen 5: read the settings not decoded yet
 
 func usage() -> Never {
     let name = URL(fileURLWithPath: CommandLine.arguments.first ?? "astrobar-cli").lastPathComponent
     FileHandle.standardError.write(
-        "usage: \(name) [dump | get-eq | set-eq <1-3> | selftest-write | probe-error]\n".data(using: .utf8)!)
+        "usage: \(name) [dump | get-eq | set-eq <1-3> | selftest-write | probe-error | x-status | x-volume <0-21> | x-probe]\n".data(using: .utf8)!)
     exit(2)
 }
 
@@ -32,7 +35,7 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 let command = arguments.first ?? "dump"
 
 switch command {
-case "dump", "get-eq", "set-eq", "selftest-write", "probe-error":
+case "dump", "get-eq", "set-eq", "selftest-write", "probe-error", "x-status", "x-volume", "x-probe":
     break
 default:
     usage()
@@ -44,6 +47,63 @@ if command == "set-eq" {
           let preset = Int(arguments[1]),
           A50Limits.eqPresets.contains(preset) else {
         usage()
+    }
+}
+
+// The A50 X and A50 Gen 5 speak a different protocol on a different device.
+if command == "x-status" || command == "x-volume" || command == "x-probe" {
+    var requestedVolume: Int?
+    if command == "x-volume" {
+        guard arguments.count == 2, let level = Int(arguments[1]), A50X.volumeRange.contains(level) else {
+            usage()
+        }
+        requestedVolume = level
+    }
+
+    let station = A50XDevice()
+    await station.start()
+    let deadline = Date().addingTimeInterval(5)
+    while !station.isConnected, Date() < deadline {
+        try? await Task.sleep(for: .milliseconds(100))
+    }
+    guard station.isConnected else {
+        print("✗ A50 X / A50 Gen 5 base station not found"); exit(1)
+    }
+
+    // Read requests for the settings whose replies have not been decoded yet,
+    // so their layout can be read off the hardware. Nothing is written.
+    if command == "x-probe" {
+        let settings: [(String, UInt8)] = [
+            ("sidetone", 0x09), ("equalizer", 0x0D), ("dock light", 0x0F), ("noise gate", 0x14),
+        ]
+        print(A50X.modelName(productID: station.productID ?? 0))
+        for (name, id) in settings {
+            do {
+                let payload = try await station.rawRead(command: id)
+                let hex = payload.map { String(format: "%02x", $0) }.joined(separator: " ")
+                line(name, "\(payload.count) bytes: \(hex)")
+            } catch {
+                line(name, "no value (\(error.localizedDescription))")
+            }
+        }
+        exit(0)
+    }
+
+    do {
+        if let requestedVolume {
+            try await station.setVolume(requestedVolume)
+            try? await Task.sleep(for: .milliseconds(300))
+        }
+        print(A50X.modelName(productID: station.productID ?? 0))
+        let battery = try await station.battery()
+        line("Battery", "\(battery.status.chargePercent)%" + (battery.isDocked ? " (on base)" : ""))
+        let volume = try await station.volume()
+        let mix = try await station.chatMix()
+        line("Volume", "\(volume) of \(A50X.volumeRange.upperBound)")
+        line("Game/voice mix", "\(mix) of \(A50X.chatMixRange.upperBound)")
+        exit(0)
+    } catch {
+        print("✗ \(error.localizedDescription)"); exit(1)
     }
 }
 

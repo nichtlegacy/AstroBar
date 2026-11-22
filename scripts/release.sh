@@ -46,6 +46,17 @@ run() {
 
 # --- Preflight -------------------------------------------------------------
 
+# package_app.sh honours these for local and fork builds. Left set by accident
+# they would ship an official release without an update feed or signed with a
+# personal certificate, so refuse instead of guessing.
+for var in ASTROBAR_FEED_URL ASTROBAR_SIGN_IDENTITY; do
+    if [ "${!var+set}" = "set" ]; then
+        echo "error: ${var} is set in the environment; a release must use the official feed and signature" >&2
+        echo "hint: run 'unset ${var}' and try again" >&2
+        exit 1
+    fi
+done
+
 command -v gh >/dev/null || { echo "error: gh not installed" >&2; exit 1; }
 if [ "$DRY_RUN" -eq 0 ]; then
     gh auth status >/dev/null 2>&1 || { echo "error: gh is not authenticated, run 'gh auth login'" >&2; exit 1; }
