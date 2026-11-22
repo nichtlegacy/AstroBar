@@ -5,6 +5,15 @@
     <description>Most recent changes for AstroBar.</description>
     <language>en</language>
     <item>
+      <title>Version 1.1.0</title>
+      <pubDate>Sun, 22 Nov 2026 15:40:58 +0000</pubDate>
+      <sparkle:version>2</sparkle:version>
+      <sparkle:shortVersionString>1.1.0</sparkle:shortVersionString>
+      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <description>&lt;ul&gt;&lt;li&gt;Support for the ASTRO A50 X: battery, headset volume, game/voice mix (read-only), sidetone, noise gate and the base station light, in its own panel. Contributed and tested on hardware by @erik-sutton95&lt;/li&gt;&lt;li&gt;Experimental support for the A50 Gen 5, which speaks the same protocol as the A50 X; untested, reports are welcome&lt;/li&gt;&lt;li&gt;Optional on the A50 X and Gen 5: the Mac's volume keys set the headset volume, with an on-screen level indicator. Off by default, needs the Accessibility permission&lt;/li&gt;&lt;li&gt;`astrobar-cli` gains `x-status`, `x-volume` and `x-probe` for the A50 X and Gen 5&lt;/li&gt;&lt;li&gt;Nothing changes for the A50 Gen 4&lt;/li&gt;&lt;/ul&gt;</description>
+      <enclosure url="https://github.com/nichtlegacy/AstroBar/releases/download/v1.1.0/AstroBar-1.1.0.dmg" type="application/octet-stream" sparkle:edSignature="2fOoIoC9pOqWWbxepS9RJ+U9nuw4ipeY0PAV4oBC08u4grQaLBDAENUsVlRstJ+Ns0UQI+61pEKk8kBDNmW6Bw==" length="3343493" />
+    </item>
+    <item>
       <title>Version 1.0.0</title>
       <pubDate>Sat, 19 Sep 2026 21:43:41 +0000</pubDate>
       <sparkle:version>1</sparkle:version>
